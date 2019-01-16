@@ -1,8 +1,0 @@
-prefix=/home/deep/catkin_ws/install
-
-Name: fira_maze
-Description: Description of fira_maze
-Version: 0.0.0
-Cflags: 
-Libs: -L/home/deep/catkin_ws/install/lib 
-Requires: 
