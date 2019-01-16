@@ -1,0 +1,11 @@
+STOP /1e-1/
+FORWARD /1e-1/
+BACKWARD /1e-1/
+BLACK /1e-1/
+WHITE /1e-1/
+BOTTLE /1e-1/
+GO /1e-1/
+ITEM /1e-1/
+GREEN /1e-1/
+CHAIR /1e-1/
+SHOE /1e-1/

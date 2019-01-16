@@ -1,0 +1,8 @@
+prefix=/home/deep/catkin_ws/install
+
+Name: path_traverser
+Description: Description of path_traverser
+Version: 0.0.0
+Cflags: 
+Libs: -L/home/deep/catkin_ws/install/lib 
+Requires: 
