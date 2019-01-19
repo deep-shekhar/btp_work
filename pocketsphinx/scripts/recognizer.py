@@ -36,7 +36,8 @@ class recognizer(object):
             self.lm = rospy.get_param(self._lm_param)
         else:
             rospy.loginfo("Loading the default acoustic model")
-            self.lm = "/home/deep/Downloads/hub4wsj_sc_8k"
+	    self.lm = "/home/deep/catkin_ws/src/pocketsphinx/model_adaption/eng_ind"
+            #self.lm = "/home/deep/Downloads/hub4wsj_sc_8k"
             rospy.loginfo("Done loading the default acoustic model")
 
         if rospy.has_param(self._dict_param):
@@ -104,7 +105,7 @@ class recognizer(object):
                 rospy.logwarn("Error, make sure your wav file is composed of keywords!!")
                 rospy.logwarn("Otherwise, your speech is uninterpretable :C ")
             else:
-                print hypothesis.hypstr
+                print "\n",hypothesis.hypstr,"\n"
 
         else:
             stream = pyaudio.PyAudio().open(format=pyaudio.paInt16, channels=1,
@@ -133,8 +134,10 @@ class recognizer(object):
         Publish the words
         """
         if self.decoder.hyp() != None:
+            print("\n")
             print ([(seg.word) 
                 for seg in self.decoder.seg()])
+	    print("\n")
             seg.word = seg.word.lower()
             self.decoder.end_utt()
             self.decoder.start_utt()
