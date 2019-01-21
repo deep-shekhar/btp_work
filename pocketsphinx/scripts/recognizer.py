@@ -30,7 +30,7 @@ class recognizer(object):
         self._wavpath_param = "~wavpath"
 
         # you may need to change publisher destination depending on what you run
-        self.pub_ = rospy.Publisher('~output', String, queue_size=1)
+        self.pub_ = rospy.Publisher('kws_data', String, queue_size=1)
 
         if rospy.has_param(self._lm_param):
             self.lm = rospy.get_param(self._lm_param)
