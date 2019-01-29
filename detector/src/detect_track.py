@@ -1,7 +1,5 @@
-#!/usr/bin/env python
 from imutils.video import VideoStream,FileVideoStream
 from imutils.video import FPS
-
 import argparse
 import imutils
 import time
@@ -36,7 +34,6 @@ def callback(ros_data):
 	global net
 	global sub
 	global count
-	global tracker
 
 	frame = br.compressed_imgmsg_to_cv2(ros_data)
 	frame = imutils.resize(frame, width=400)
@@ -45,71 +42,32 @@ def callback(ros_data):
 	# key = cv2.waitKey(1) & 0xFF
 	(h, w) = frame.shape[:2]
 
-	if(count == 0):
-		blob = cv2.dnn.blobFromImage(cv2.resize(frame, (300, 300)), 0.007843, (300, 300), 127.5)
-		net.setInput(blob)
-		detections = net.forward()
-		print detections.shape[2]
-		for i in np.arange(0, detections.shape[2]):
-			confidence = detections[0, 0, i, 2]
-			if confidence > 0.3:
-				count = 1
-				idx = int(detections[0, 0, i, 1])
-				if idx is 5:
-					box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
+	blob = cv2.dnn.blobFromImage(cv2.resize(frame, (300, 300)), 0.007843, (300, 300), 127.5)
+	net.setInput(blob)
+	detections = net.forward()
+	print detections.shape[2]
+	for i in np.arange(0, detections.shape[2]):
+		confidence = detections[0, 0, i, 2]
+		if confidence > 0.3:
+			idx = int(detections[0, 0, i, 1])
+			if idx is 5:
+				box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
 
-					## my code changes				
-					(startX, startY, endX, endY) = box.astype("int")
-					print(startX, startY, endX, endY)
-					print("depth and lateral_shift ",depth_calc(10.2362,startX,startY,endX,endY))
-					label = "{}: {:.2f}%".format(CLASSES[idx], confidence * 100)
-					(startX, startY, endX, endY) = box.astype("int")
-					print("(%d,%d),(%d,%d),label=%s"%(startX,startY,endX,endY,CLASSES[idx]))                                     
+				## my code changes				
+				(startX, startY, endX, endY) = box.astype("int")
+				print(startX, startY, endX, endY)
+				print("depth and lateral_shift ",depth_calc(10.2362,startX,startY,endX,endY))
+				label = "{}: {:.2f}%".format(CLASSES[idx], confidence * 100)
+				(startX, startY, endX, endY) = box.astype("int")
+				print("(%d,%d),(%d,%d),label=%s"%(startX,startY,endX,endY,CLASSES[idx]))                                     
 
-					x1,y1,x2,y2 = startX,startY,endX,endY
+				x1,y1,x2,y2 = startX,startY,endX,endY
 
-					bbox = (x1,y1,x2,y2)
+				bbox = (x1,y1,x2,y2)
 
-					ok = tracker.init(frame,bbox)
-
-					label = "{}: {:.2f}%".format(CLASSES[idx],
-							confidence * 100)
-		           
-	else:   
-		timer = cv2.getTickCount()
-		# Update tracker
-		ok, bbox = tracker.update(frame)
-
-		fps = cv2.getTickFrequency() / (cv2.getTickCount() - timer);
-
-		# Draw bounding box
-		if ok:
-			# Tracking success
-			p1 = (int(bbox[0]), int(bbox[1]))
-			p2 = (int(bbox[0] + bbox[2]), int(bbox[1] + bbox[3]))
-			cv2.rectangle(frame, p1, p2, (255,0,0), 2, 1)
-			x1,y1 = p1[0],p1[1]
-			x2,y2 = p2[0],p2[1]
-			print("depth and lateral_shift ",depth_calc(10.2362,x1,y1,x2,y2))
-
-		else :
-			# Tracking failure
-			cv2.putText(frame, "Tracking failure detected", (100,80), cv2.FONT_HERSHEY_SIMPLEX, 0.75,(0,0,255),2)
-
-		# Display tracker type on frame
-		cv2.putText(frame, "GOTURN Tracker", (100,20), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (50,170,50),2);
-
-		# Display FPS on frame
-		cv2.putText(frame, "FPS : " + str(int(fps)), (100,50), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (50,170,50), 2);
-
-		# Display result
-		cv2.imshow("Tracking", frame)
-
-		# Exit if ESC pressed
-		k = cv2.waitKey(1) & 0xff
-		if k == 27:
-			sub.unregister()
-			cv2.destroyAllWindows()
+				label = "{}: {:.2f}%".format(CLASSES[idx],
+						confidence * 100)
+		   
 
 
 if __name__ == '__main__':
@@ -137,11 +95,9 @@ if __name__ == '__main__':
 	print("[INFO] loading model...")
 	net = cv2.dnn.readNetFromCaffe(args["prototxt"], args["model"])
 
-	#tracker model
-	tracker = cv2.TrackerGOTURN_create()
 
 	rospy.init_node('detector', anonymous=True)
-	sub = rospy.Subscriber("logitech_camera1/image/compressed", CompressedImage, callback)
+	sub = rospy.Subscriber("/burgercam/image_raw/ompressed", CompressedImage, callback)
 	try:
 		rospy.spin()
 	except KeyboardInterrupt:

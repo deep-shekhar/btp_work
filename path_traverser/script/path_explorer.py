@@ -30,17 +30,30 @@ def scan_callback(msg):
     
 
 def voice_cmd(word):
-    global start, stop
-    if start==0:
-        if not word.data.find('go') > -1:
-            return 
+    global start, stop, left, right, forward, backward
+    if word.data.find('go') > -1: 
         start = 1
         stop = 0
-    if stop == 0:
-        if not word.data.find('stop') > -1:
-            return
+	left = 0
+	right = 0
+	forward = 0
+	backward = 0
+    elif word.data.find('stop') > -1:
         start = 0
         stop = 1
+	left = 0
+	right = 0
+	forward = 0
+	backward = 0
+    elif word.data.find('left') > -1:
+	left = 1
+    elif word.data.find('right') > -1:
+	right = 1
+    elif word.data.find('forward') > -1:
+	forward = 1
+    elif word.data.find('backward') > -1:
+	backward = 1
+
     return
 
 
@@ -58,6 +71,10 @@ same_cmd_cnt = 0
 last_cmd = -1
 start = 0
 stop = 1
+left = 0
+right = 0
+forward = 0
+backward = 0
 
 # Create the node
 cmd_vel_pub = rospy.Publisher('cmd_vel', Twist, queue_size = 1) # to move the robot
@@ -88,16 +105,43 @@ while not rospy.is_shutdown():
     # The left hand on wall algorithm:
     
     if start == 0 or stop == 1:
-        print("Stopped!!")
-        command.angular.z = 0.0
-        command.linear.x = 0.0
-        cmd_vel_pub.publish(command)
-        while start == 0:
+        #print("Stopped!!")
+	if left == 1:
+           command.angular.z = 0.5
+           command.linear.x = 0.0
+           cmd_vel_pub.publish(command)
+	   time.sleep(1)
+	   left = 0
+	elif right == 1:
+           command.angular.z = -0.5
+           command.linear.x = 0.0
+           cmd_vel_pub.publish(command)
+	   time.sleep(1)
+	   right = 0
+	elif forward == 1:
+           command.angular.z = 0.0
+           command.linear.x = 0.08
+           cmd_vel_pub.publish(command)
+	   time.sleep(1)
+	   forward = 0
+	elif backward == 1:
+           command.angular.z = 0.0
+           command.linear.x = -0.08
+           cmd_vel_pub.publish(command)
+	   time.sleep(1)	
+	   backward = 0
+	else:
+           command.angular.z = 0.0
+           command.linear.x = 0.0
+           cmd_vel_pub.publish(command)
+
+        if start == 0:
             continue
     
     print("min_front={} , min_left={}, min_right={} ".format(min_front,min_left,min_right))
     
-    if(same_cmd_cnt > 150):
+    
+    if(same_cmd_cnt > 160):
         if(last_cmd == 5):
             if(min_right < min_left):
                 command.angular.z = 0.5
@@ -107,23 +151,50 @@ while not rospy.is_shutdown():
                 command.linear.x = 0.0
             cmd_vel_pub.publish(command)
             same_cmd_cnt = 0
-            time.sleep(1)
+            time.sleep(2)
 
-    elif(same_cmd_cnt > 60):
+    elif(same_cmd_cnt > 80):
         print("seems like stuck at a place try to get out")
         #ts = int(time.time())
         if(last_cmd == 0):
-            command.angular.z = -0.7  
-            command.linear.x = -0.1
+            command.angular.z = -1.4  
+            command.linear.x = -0.09
         elif(last_cmd == 3):
-            command.angular.z = 0.7   
-            command.linear.x = -0.1
+            command.angular.z = 1.4   
+            command.linear.x = -0.09
                 
         cmd_vel_pub.publish(command)
         same_cmd_cnt = 0
         time.sleep(2)
 
-    if((min_left < 0.26 or min_right < 0.26) and min_front > 0.31):
+    if (min_front < 0.19):
+	if(last_cmd == 5):
+            same_cmd_cnt += 1
+        else:
+            last_cmd = 5
+            same_cmd_cnt = 0
+        print("front wall too close backup a little")
+        command.angular.z = 0
+        command.linear.x = -0.08
+        cmd_vel_pub.publish(command)
+        while(min_front < 0.25 and not rospy.is_shutdown()):      
+            pass
+		
+    elif(min_left < 0.15):
+	print("too close to left wall")
+	command.angular.z = -0.1
+	command.linear.x = 0.08
+        cmd_vel_pub.publish(command)
+        time.sleep(1)      
+    elif(min_right < 0.15):
+	print("too close to right wall")
+	command.angular.z = 0.1
+	command.linear.x = 0.08
+	cmd_vel_pub.publish(command)
+	time.sleep(1)      
+
+
+    if((min_left < 0.26 or min_right < 0.26) and min_front > 0.32):
         if(last_cmd == 5):
             same_cmd_cnt += 1
         else:
@@ -131,11 +202,12 @@ while not rospy.is_shutdown():
             same_cmd_cnt = 0
 
         print("along wall but front is clear")
+		
         command.angular.z = 0.0   
-        command.linear.x = 0.14
+        command.linear.x = 0.08
         cmd_vel_pub.publish(command)    
 
-    elif(min_left > 0.22 and not rospy.is_shutdown()):
+    elif(min_left > 0.25 and not rospy.is_shutdown()):
         if(last_cmd == 0):
             same_cmd_cnt += 1
         else:
@@ -143,30 +215,17 @@ while not rospy.is_shutdown():
             same_cmd_cnt = 0
 
         print("Can turn Left so turing Left")
-        if(min_front > 0.25):       
-            command.angular.z = 0.09   
-            command.linear.x = 0.14
+        if(min_front > 0.33 and min_right > 0.20):       
+            command.angular.z = 0.08   
+            command.linear.x = 0.11
         else:
-            command.angular.z = 0.8    
+            command.angular.z = 0.5    
             command.linear.x = 0.0
         # publish command 
         cmd_vel_pub.publish(command)
     
-    elif(min_front < 0.20 and not rospy.is_shutdown()):
-        if(last_cmd == 1):
-            same_cmd_cnt += 1
-        else:
-            last_cmd = 1
-            same_cmd_cnt = 0
-
-        print("front wall backup a little")
-        command.angular.z = 0
-        command.linear.x = -0.08
-        cmd_vel_pub.publish(command)
-        while(min_front < 0.25 and not rospy.is_shutdown()):      
-            pass
-
-    elif(min_front > 0.25 and not rospy.is_shutdown()):
+    
+    elif(min_front > 0.33 and not rospy.is_shutdown()):
         if(last_cmd == 2):
             same_cmd_cnt += 1
         else:
@@ -175,7 +234,7 @@ while not rospy.is_shutdown():
         
         print("Can go ahead straight so going straight")
         command.angular.z = 0.0
-        command.linear.x = 0.15
+        command.linear.x = 0.11
         # publish command 
         cmd_vel_pub.publish(command)
 
@@ -187,11 +246,11 @@ while not rospy.is_shutdown():
             same_cmd_cnt = 0
 
         print("Can turn Right so turing Right")
-        if(min_front > 0.25):       
-            command.angular.z = -0.09    
-            command.linear.x = 0.14
+        if(min_front > 0.33 and min_left > 0.20):       
+            command.angular.z = -0.08    
+            command.linear.x = 0.11
         else:
-            command.angular.z = -0.8    
+            command.angular.z = -0.5    
             command.linear.x = 0.0
 
         # publish command 
@@ -205,56 +264,16 @@ while not rospy.is_shutdown():
             same_cmd_cnt = 0
             
         print("At dead end so turn around")
-        command.angular.z = -1.1
+	if(min_left < min_right):
+            command.angular.z = -0.5
+	else:
+	    command.angular.z = 0.5
         command.linear.x = 0.0
         # publish command 
         cmd_vel_pub.publish(command)
-        while(min_front < 0.25 and not rospy.is_shutdown()):      
+        while(min_front < 0.26 and not rospy.is_shutdown()):      
             pass
     
     # wait for the loop
     rate.sleep()
-    
-'''
-    if(near_wall == 0 and not rospy.is_shutdown()): #1
-        print("Moving towards a wall.")
-        if(min_front > 0.20 and min_right > 0.20 and min_left > 0.20):    
-            command.angular.z = -0.08    # if nothing near, go forward
-            command.linear.x = 0.15
-            print "C"
-        elif(min_left < 0.20):           # if wall on left, start tracking
-            near_wall = 1       
-            print "A"            
-        else:
-            command.angular.z = -0.25   # if not on left, turn right 
-            command.linear.x = 0.0
-
-        cmd_vel_pub.publish(command)
-        
-    else:   # left wall detected
-        if(min_front > 0.20): #2
-            if(min_left < 0.12):    #3
-                print("Range: {:.2f}m - Too close. Backing up.".format(min_left))
-                command.angular.z = -0.2
-                command.linear.x = -0.05
-            elif(min_left < 0.16):  #4
-                print("Range: {:.2f}m - Wall-following; turn right.".format(min_left))
-                command.angular.z = -1.1
-                command.linear.x = 0.1
-            else:
-                print("Range: {:.2f}m - Wall-following; turn left.".format(min_left))
-                command.angular.z = 1.1
-                command.linear.x = 0.1
-                
-        else:   #5
-            print("Front obstacle detected. Turning away.")
-            command.angular.z = -1.0
-            command.linear.x = 0.0
-            cmd_vel_pub.publish(command)
-            while(min_front < 0.3 and not rospy.is_shutdown()):      
-                pass
-        # publish command 
-        cmd_vel_pub.publish(command)
-
-'''
     

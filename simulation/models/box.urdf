@@ -3,21 +3,21 @@
 	
     <link name="simple_box_base_link">
  	    <inertial>
-            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <origin xyz="0 0 1" rpy="3.14 1.57 0"/>
             <mass value="1.0" />
             <inertia ixx="0.0741666666667" ixy="0.0" ixz="0.0" iyy="0.0585416666667" iyz="0.0" izz="0.0260416666667"/>
         </inertial>
         <collision>
-            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <origin xyz="0 0 1" rpy="3.14 1.57 0"/>
             <geometry>
                 <box size="1.0 1.0 0.4"/>
             </geometry>
         </collision>
         <visual>
-            <origin rpy="0.0 0 0" xyz="0 0 0"/>
+            <origin rpy="3.14 1.57 0" xyz="0 0 1"/>
             <geometry>
                 <!--<box size="0.8 0.8 0.2"/>-->
-                <mesh filename="/home/aashay/btp/btp-extension/src/btp_work/simulation/models/meshes/box.dae"/>
+                <mesh filename="/home/deep/catkin_ws/src/simulation/models/meshes/box.dae"/>
             </geometry>
         </visual>
     </link>

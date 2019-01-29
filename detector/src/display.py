@@ -34,7 +34,7 @@ def callback(ros_data):
 
 if __name__ == '__main__':
 	rospy.init_node('display', anonymous=True)
-	sub = rospy.Subscriber("logitech_camera1/image/compressed", CompressedImage, callback)
+	sub = rospy.Subscriber("burgercam/image_raw/compressed", CompressedImage, callback)
 	try:
 		rospy.spin()
 	except KeyboardInterrupt:
