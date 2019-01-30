@@ -5,6 +5,7 @@ import cv2
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import math 
+from datetime import datetime
 
 def dist(labA, labB):
 	deltaL = labA[0] - labB[0]
@@ -69,9 +70,9 @@ def rgb2lab (inputColor):
 	a = 500 * ( XYZ[ 0 ] - XYZ[ 1 ] )
 	b = 200 * ( XYZ[ 1 ] - XYZ[ 2 ] )
 
-	Lab [ 0 ] = round( L, 4 )
-	Lab [ 1 ] = round( a, 4 )
-	Lab [ 2 ] = round( b, 4 )
+	Lab [ 0 ] = round( L, 5 )
+	Lab [ 1 ] = round( a, 5 )
+	Lab [ 2 ] = round( b, 5 )
 
 	return Lab
  
@@ -88,9 +89,9 @@ class ColorLabeler:
 		for (i, (name, rgb)) in enumerate(colors.items()):
 			self.lab[i] = rgb2lab(rgb)
 			self.colorNames.append(name)
-		#print(self.lab)
+		print(self.lab)
 
-	def label(self,orig_img,x1,y1,x2,y2):
+	def label(self,orig_img,x1,y1,x2,y2,req_color):
 			img = orig_img[y1:y2, x1:x2]
 			#img = cv2.GaussianBlur(img, (5, 5), 0)
 			height, width, dim = img.shape
@@ -99,7 +100,6 @@ class ColorLabeler:
 			kmeans = KMeans(n_clusters=3)
 			kmeans.fit( img_vec )
 
-			#cv2.imwrite("detect_result.png", img)
 			unique_l, counts_l = np.unique(kmeans.labels_, return_counts=True)
 			sort_ix = np.argsort(counts_l)
 			sort_ix = sort_ix[::-1]
@@ -123,23 +123,28 @@ class ColorLabeler:
 			obj_lab = np.zeros((1, 1, 3))
 			
 			for cluster_center in kmeans.cluster_centers_[sort_ix]:
-				if abs(max(cluster_center)-min(cluster_center)) > 25:
+				if abs(max(cluster_center)-min(cluster_center)) > 35:
 					#print('not rgb diff= {} '.format(abs(max(cluster_center)-min(cluster_center))))
 					obj_lab = rgb2lab((cluster_center[2], cluster_center[1], cluster_center[0]))
 					break
 					
 			minDist = np.inf
 	 		color_idx = -1
-			
+			print(obj_lab)
 			# loop over the known L*a*b* color values
 			for (i, row) in enumerate(self.lab):
-				d = dist(row[0], obj_lab)
+				d = abs(row[0][0] - obj_lab[0]) + abs(row[0][1] - obj_lab[1]) + abs(row[0][2] - obj_lab[2])
 				if d < minDist:
 					minDist = d
 					color_idx = i
 				print('distance from {} is {} color = {}, min={}'.format(i,d,self.colorNames[i],minDist))
 	 			
-			return self.colorNames[color_idx]
+			if self.colorNames[color_idx] == req_color:
+				print('req_color was = {}'.format(req_color))
+				cv2.imwrite("detect_result{}.png".format(datetime.now()),orig_img)
+				return 1
+
+			return 0
 			
 	
 

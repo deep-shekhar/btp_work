@@ -30,29 +30,31 @@ def scan_callback(msg):
     
 
 def voice_cmd(word):
-    global start, stop, left, right, forward, backward
+    global start, wait, left, right, forward, backward
     if word.data.find('go') > -1: 
         start = 1
-        stop = 0
+        wait = 0
 	left = 0
 	right = 0
 	forward = 0
 	backward = 0
-    elif word.data.find('stop') > -1:
+    elif word.data.find('wait') > -1:
         start = 0
-        stop = 1
+        wait = 1
 	left = 0
 	right = 0
 	forward = 0
 	backward = 0
-    elif word.data.find('left') > -1:
-	left = 1
-    elif word.data.find('right') > -1:
-	right = 1
-    elif word.data.find('forward') > -1:
-	forward = 1
-    elif word.data.find('backward') > -1:
-	backward = 1
+
+    if wait==1:
+        if word.data.find('left') > -1:
+	    left = 1
+        elif word.data.find('right') > -1:
+	    right = 1
+        elif word.data.find('forward') > -1:
+	    forward = 1
+        elif word.data.find('backward') > -1:
+	    backward = 1
 
     return
 
@@ -70,7 +72,7 @@ i_left = 0
 same_cmd_cnt = 0
 last_cmd = -1
 start = 0
-stop = 1
+wait = 1
 left = 0
 right = 0
 forward = 0
@@ -79,7 +81,7 @@ backward = 0
 # Create the node
 cmd_vel_pub = rospy.Publisher('cmd_vel', Twist, queue_size = 1) # to move the robot
 
-voice_sub = rospy.Subscriber('kws_data',String, voice_cmd)
+voice_sub = rospy.Subscriber('cmd_data',String, voice_cmd)
 scan_sub = rospy.Subscriber('scan', LaserScan, scan_callback)   # to read the laser scanner
 rospy.init_node('path_explorer')
 
@@ -104,16 +106,16 @@ time.sleep(2)
 while not rospy.is_shutdown():
     # The left hand on wall algorithm:
     
-    if start == 0 or stop == 1:
+    if start == 0 or wait == 1:
         #print("Stopped!!")
 	if left == 1:
-           command.angular.z = 0.5
+           command.angular.z = 0.6
            command.linear.x = 0.0
            cmd_vel_pub.publish(command)
 	   time.sleep(1)
 	   left = 0
 	elif right == 1:
-           command.angular.z = -0.5
+           command.angular.z = -0.6
            command.linear.x = 0.0
            cmd_vel_pub.publish(command)
 	   time.sleep(1)
@@ -218,11 +220,13 @@ while not rospy.is_shutdown():
         if(min_front > 0.33 and min_right > 0.20):       
             command.angular.z = 0.08   
             command.linear.x = 0.11
+	    cmd_vel_pub.publish(command)
         else:
             command.angular.z = 0.5    
-            command.linear.x = 0.0
-        # publish command 
-        cmd_vel_pub.publish(command)
+            command.linear.x = 0.0 
+            cmd_vel_pub.publish(command)
+	    while(min_front < 0.33):
+		pass
     
     
     elif(min_front > 0.33 and not rospy.is_shutdown()):
@@ -255,6 +259,8 @@ while not rospy.is_shutdown():
 
         # publish command 
         cmd_vel_pub.publish(command)
+	while(min_left < 0.30):
+	    pass
     
     else:
         if(last_cmd == 4):
@@ -271,7 +277,7 @@ while not rospy.is_shutdown():
         command.linear.x = 0.0
         # publish command 
         cmd_vel_pub.publish(command)
-        while(min_front < 0.26 and not rospy.is_shutdown()):      
+        while(min_front < 0.33 and not rospy.is_shutdown()):      
             pass
     
     # wait for the loop

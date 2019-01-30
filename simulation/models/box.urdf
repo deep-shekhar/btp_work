@@ -14,7 +14,11 @@
             </geometry>
         </collision>
         <visual>
+<<<<<<< HEAD
             <origin rpy="3.14 1.57 0" xyz="0 0 1"/>
+=======
+            <origin xyz="0 0 1" rpy="3.14 1.57 0"/>
+>>>>>>> 9f8e38a4a60d1cb22516904415414cd4520fdd07
             <geometry>
                 <!--<box size="0.8 0.8 0.2"/>-->
                 <mesh filename="/home/deep/catkin_ws/src/simulation/models/meshes/box.dae"/>

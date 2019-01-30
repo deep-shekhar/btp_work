@@ -109,7 +109,7 @@ class recognizer(object):
 
         else:
             stream = pyaudio.PyAudio().open(format=pyaudio.paInt16, channels=1,
-                        rate=16000, input=True, frames_per_buffer=1024)
+                        rate=16000, input=True, frames_per_buffer=32)
             stream.start_stream()
             rospy.loginfo("Done opening the audio channel")
 
@@ -130,9 +130,6 @@ class recognizer(object):
                 self.publish_result()
 
     def publish_result(self):
-        """
-        Publish the words
-        """
         if self.decoder.hyp() != None:
             print("\n")
             print ([(seg.word) 
@@ -144,9 +141,6 @@ class recognizer(object):
             self.pub_.publish(seg.word)
 
     def shutdown(self):
-        """
-        command executed after Ctrl+C is pressed
-        """
         rospy.loginfo("Stopping PocketSphinx")
 
 if __name__ == "__main__":

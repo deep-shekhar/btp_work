@@ -15,9 +15,14 @@ import rospy
 from sensor_msgs.msg import CompressedImage
 from cv_bridge import CvBridge
 from geometry_msgs.msg import Point32
+from std_msgs.msg import String
 br = CvBridge()
 #pub_ = rospy.Publisher('detected_object', CompressedImage, queue_size=1)
 from object_color import ColorLabeler
+
+task_buf = []
+color_buf = ['red','blue','green']
+obj_buf = ['chair','bottle']
 
 def depth_calc(knownHeight,x1,y1,x2,y2,focalLength=544.7667):
 	pixHeight = abs(y2-y1)
@@ -27,6 +32,21 @@ def depth_calc(knownHeight,x1,y1,x2,y2,focalLength=544.7667):
 	X_shift = ((cx-200)*depth)/focalLength 
 	return abs(depth),X_shift
 
+def obj_detect(word):
+    global task_buf
+    
+    if word.data.strip() == 'new item':
+	del task_buf[:]
+
+    if any(word.data.strip() in s for s in color_buf):
+	if len(task_buf) == 0:
+	    task_buf.append(word.data.strip())
+    elif any(word.data.strip() in s for s in obj_buf):
+	if len(task_buf) == 1:
+	    task_buf.append(word.data.strip())
+    print(task_buf)
+    return
+
 
 def callback(ros_data):
 #### direct conversion to CV2 ####
@@ -35,6 +55,9 @@ def callback(ros_data):
 	global COLORS
 	global net
 	global sub
+	global task_buf
+
+	global voice_sub
 	frame = br.compressed_imgmsg_to_cv2(ros_data)
 	frame = imutils.resize(frame, width=400)
 	(h, w) = frame.shape[:2]
@@ -58,11 +81,12 @@ def callback(ros_data):
 			(startX, startY, endX, endY) = box.astype("int")
 			#print("depth and lateral_shift ",depth_calc(10.2362,startX,startY,endX,endY))
 			#print(label)
-			if 'bottle' in label:
-				cl = ColorLabeler()
-				color = cl.label(frame,startX,startY,endX,endY)
-				print(color)
-				cv2.imwrite("detect_result.png", frame)
+
+			if len(task_buf) == 2:
+			    if task_buf[1] in label:
+				found = 0
+			        cl = ColorLabeler()
+				found = cl.label(frame,startX,startY,endX,endY,task_buf[0])
 
 			cv2.rectangle(frame, (startX, startY), (endX, endY), COLORS[idx], 2)
 			y = startY - 15 if startY - 15 > 15 else startY + 15
@@ -74,6 +98,7 @@ def callback(ros_data):
 
 	if key == ord("q"):
 		sub.unregister()
+		voice_sub.unregister()
 		cv2.destroyAllWindows()
 
 if __name__ == '__main__':
@@ -92,6 +117,7 @@ if __name__ == '__main__':
 
 	rospy.init_node('detector', anonymous=True)
 	sub = rospy.Subscriber("/burgercam/image_raw/compressed", CompressedImage, callback)
+	voice_sub = rospy.Subscriber('cmd_data',String, obj_detect)
 	try:
 		rospy.spin()
 	except KeyboardInterrupt:
