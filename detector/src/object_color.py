@@ -85,7 +85,7 @@ class ColorLabeler:
 			"blue": (0, 0, 255)})
 		self.lab = np.zeros((len(colors), 1, 3))
 		self.colorNames = []
- 
+		
 		for (i, (name, rgb)) in enumerate(colors.items()):
 			self.lab[i] = rgb2lab(rgb)
 			self.colorNames.append(name)
@@ -141,7 +141,7 @@ class ColorLabeler:
 	 			
 			if self.colorNames[color_idx] == req_color:
 				print('req_color was = {}'.format(req_color))
-				cv2.imwrite("detect_result{}.png".format(datetime.now()),orig_img)
+				cv2.imwrite("./detect_result/{}.jpg".format(datetime.now().strftime('%H:%m:%s')),img)
 				return 1
 
 			return 0
