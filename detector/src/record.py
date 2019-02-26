@@ -18,23 +18,27 @@ br = CvBridge()
 # pub = rospy.Publisher('rightlegAngles', Point32, queue_size=100)
 
 
+count = 0
 
 def callback(ros_data):
 #### direct conversion to CV2 ####
-	global br
+	global br, count
+        count += 1
 	frame = br.compressed_imgmsg_to_cv2(ros_data)
 	frame = imutils.resize(frame, width=400)
 	# #debug
 	cv2.imshow("Frame", frame)
 	key = cv2.waitKey(1) & 0xFF
-
+        if(count%30==0):
+            frame = cv2.resize(frame, (360,200))
+            cv2.imwrite("/home/deep/catkin_ws/src/detector/src/img_folder/frame_{}.jpg".format(count),frame)
 	if key == ord("q"):
 		sub.unregister()
 		cv2.destroyAllWindows()
 
 if __name__ == '__main__':
-	rospy.init_node('display', anonymous=True)
-	sub = rospy.Subscriber("burgercam/image_raw/compressed", CompressedImage, callback)
+	rospy.init_node('record', anonymous=True)
+	sub = rospy.Subscriber("/burgercam/image_raw/compressed", CompressedImage, callback)
 	try:
 		rospy.spin()
 	except KeyboardInterrupt:
