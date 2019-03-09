@@ -23,6 +23,7 @@ from object_color import ColorLabeler
 task_buf = []
 color_buf = ['red','blue','green']
 obj_buf = ['chair','bottle']
+count = 0
 
 def depth_calc(knownHeight,x1,y1,x2,y2,focalLength=544.7667):
 	pixHeight = abs(y2-y1)
@@ -56,10 +57,14 @@ def callback(ros_data):
 	global net
 	global sub
 	global task_buf
-
+        global count
 	global voice_sub
 	frame = br.compressed_imgmsg_to_cv2(ros_data)
 	frame = imutils.resize(frame, width=400)
+        if(count%25==0):
+            frame = cv2.resize(frame, (360,200))
+            cv2.imwrite("/home/deep/catkin_ws/src/detector/src/img_folder/frame_{}.jpg".format(count),frame)
+        count += 1    
 	(h, w) = frame.shape[:2]
 	#out = cv2.VideoWriter('outpy.avi',cv2.VideoWriter_fourcc('M','J','P','G'), 10, (w,h))
 	#cv2.imshow("Frame", frame)

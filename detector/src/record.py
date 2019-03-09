@@ -29,7 +29,7 @@ def callback(ros_data):
 	# #debug
 	cv2.imshow("Frame", frame)
 	key = cv2.waitKey(1) & 0xFF
-        if(count%30==0):
+        if(count%4==0):
             frame = cv2.resize(frame, (360,200))
             cv2.imwrite("/home/deep/catkin_ws/src/detector/src/img_folder/frame_{}.jpg".format(count),frame)
 	if key == ord("q"):

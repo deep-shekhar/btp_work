@@ -104,7 +104,7 @@ class ColorLabeler:
 			sort_ix = np.argsort(counts_l)
 			sort_ix = sort_ix[::-1]
 
-			'''fig = plt.figure()
+			fig = plt.figure()
 			ax = fig.add_subplot(111)
 			x_from = 0.05
 			
@@ -118,30 +118,42 @@ class ColorLabeler:
 				x_from = x_from + 0.31
 
 			plt.show()
-			'''
+			
 			
 			obj_lab = np.zeros((1, 1, 3))
 			
 			for cluster_center in kmeans.cluster_centers_[sort_ix]:
 				if abs(max(cluster_center)-min(cluster_center)) > 35:
 					#print('not rgb diff= {} '.format(abs(max(cluster_center)-min(cluster_center))))
+                                        obj_clr = cluster_center
 					obj_lab = rgb2lab((cluster_center[2], cluster_center[1], cluster_center[0]))
 					break
 					
 			minDist = np.inf
 	 		color_idx = -1
 			print(obj_lab)
-			# loop over the known L*a*b* color values
+			clr = []
 			for (i, row) in enumerate(self.lab):
 				d = abs(row[0][0] - obj_lab[0]) + abs(row[0][1] - obj_lab[1]) + abs(row[0][2] - obj_lab[2])
+                                clr.append(d)
 				if d < minDist:
 					minDist = d
 					color_idx = i
-				print('distance from {} is {} color = {}, min={}'.format(i,d,self.colorNames[i],minDist))
-	 			
+                        print('Object color is closest to {} color. LAB distance = {}'.format(self.colorNames[color_idx],minDist))
+	 		'''
+                        fig = plt.figure()
+			ax = fig.add_subplot(111)
+			x_from = 0.05
+			
+                        ax.add_patch(patches.Rectangle( (x_from, 0.05), 0.29, 0.9, alpha=None,
+                                                                facecolor='#%02x%02x%02x' % (obj_clr[2], obj_clr[1], obj_clr[0] ) ) )
+                        
+                        ax.text(0.36, 0.96, 'Object color is closest to {} color\nLAB distance from RED = {}\nLAB distance from GREEN = {}\nLAB distance from BLUE={}'.format(self.colorNames[color_idx],clr[2],clr[1],clr[0]), style='italic',bbox={'facecolor':self.colorNames[color_idx],'alpha': 0.5})
+			plt.show()'''
+
 			if self.colorNames[color_idx] == req_color:
 				print('req_color was = {}'.format(req_color))
-				cv2.imwrite("./detect_result/{}.jpg".format(datetime.now().strftime('%H:%m:%s')),img)
+				cv2.imwrite("./Desktop/RESULTS_BTP/detect_result/{}.jpg".format(datetime.now().strftime('%H:%m:%s')),img)
 				return 1
 
 			return 0
