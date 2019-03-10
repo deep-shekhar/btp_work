@@ -33,6 +33,20 @@ def depth_calc(knownHeight,x1,y1,x2,y2,focalLength=544.7667):
 	X_shift = ((cx-200)*depth)/focalLength 
 	return abs(depth),X_shift
 
+
+def increase_brightness(img, value=30):
+    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    h, s, v = cv2.split(hsv)
+
+    lim = 255 - value
+    v[v > lim] = 255
+    v[v <= lim] += value
+
+    final_hsv = cv2.merge((h, s, v))
+    img = cv2.cvtColor(final_hsv, cv2.COLOR_HSV2BGR)
+    return img
+
+
 def obj_detect(word):
     global task_buf
     
@@ -61,9 +75,10 @@ def callback(ros_data):
 	global voice_sub
 	frame = br.compressed_imgmsg_to_cv2(ros_data)
 	frame = imutils.resize(frame, width=400)
-        if(count%25==0):
+        if(count%15==0):
             frame = cv2.resize(frame, (360,200))
-            cv2.imwrite("/home/deep/catkin_ws/src/detector/src/img_folder/frame_{}.jpg".format(count),frame)
+            temp = increase_brightness(frame, value=40)
+            cv2.imwrite("/home/deep/catkin_ws/src/detector/src/img_folder/frame_{}.jpg".format(count),temp)
         count += 1    
 	(h, w) = frame.shape[:2]
 	#out = cv2.VideoWriter('outpy.avi',cv2.VideoWriter_fourcc('M','J','P','G'), 10, (w,h))
@@ -121,7 +136,7 @@ if __name__ == '__main__':
 	net = cv2.dnn.readNetFromCaffe(args["prototxt"], args["model"])
 
 	rospy.init_node('detector', anonymous=True)
-	sub = rospy.Subscriber("/burgercam/image_raw/compressed", CompressedImage, callback)
+	sub = rospy.Subscriber("/logitech_camera1/image/compressed", CompressedImage, callback)
 	voice_sub = rospy.Subscriber('cmd_data',String, obj_detect)
 	try:
 		rospy.spin()

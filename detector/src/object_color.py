@@ -104,7 +104,7 @@ class ColorLabeler:
 			sort_ix = np.argsort(counts_l)
 			sort_ix = sort_ix[::-1]
 
-			fig = plt.figure()
+			'''fig = plt.figure()
 			ax = fig.add_subplot(111)
 			x_from = 0.05
 			
@@ -118,7 +118,7 @@ class ColorLabeler:
 				x_from = x_from + 0.31
 
 			plt.show()
-			
+			'''
 			
 			obj_lab = np.zeros((1, 1, 3))
 			
@@ -151,7 +151,7 @@ class ColorLabeler:
                         ax.text(0.36, 0.96, 'Object color is closest to {} color\nLAB distance from RED = {}\nLAB distance from GREEN = {}\nLAB distance from BLUE={}'.format(self.colorNames[color_idx],clr[2],clr[1],clr[0]), style='italic',bbox={'facecolor':self.colorNames[color_idx],'alpha': 0.5})
 			plt.show()'''
 
-			if self.colorNames[color_idx] == req_color:
+			if True or self.colorNames[color_idx] == req_color:
 				print('req_color was = {}'.format(req_color))
 				cv2.imwrite("./Desktop/RESULTS_BTP/detect_result/{}.jpg".format(datetime.now().strftime('%H:%m:%s')),img)
 				return 1
